@@ -1,0 +1,20 @@
+{
+  "name": "fabco-clustering",
+  "version": "0.0.2",
+  "description": "",
+  "main": "./main.js",
+  "dependencies": {
+    "d3-dsv": "^1.2.0"
+  },
+  "devDependencies": {
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-json": "^4.0.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-typescript": "^1.0.1"
+  },
+  "scripts": {
+    "build": "rollup -c"
+  },
+  "author": "",
+  "license": "ISC"
+}
