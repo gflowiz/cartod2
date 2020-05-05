@@ -5,7 +5,7 @@ import json from "rollup-plugin-json";
 export default {
   input: "src/index.js",
   output: {
-    format: "umd",
+    format: "amd",
     file: "main.js",
     name: "clustering",
     extend: true,
