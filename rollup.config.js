@@ -8,6 +8,7 @@ export default {
     format: "umd",
     file: "main.js",
     name: "clustering",
+    extend: true,
   },
   external: [
     "electron",
