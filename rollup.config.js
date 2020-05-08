@@ -3,10 +3,10 @@ import resolve from "rollup-plugin-node-resolve";
 import json from "rollup-plugin-json";
 
 export default {
-  input: "src/index.js",
+  input: "src/main.js",
   output: {
     format: "amd",
-    file: "main.js",
+    file: "cartod2.js",
     name: "clustering",
     extend: true,
   },
@@ -27,6 +27,7 @@ export default {
     "url",
     "util",
     "string_decoder",
+    "d3@5"
   ],
   plugins: [resolve(), commonjs(), json()],
 };

@@ -1,10 +1,13 @@
 {
-  "name": "fabco-clustering",
-  "version": "0.0.4",
-  "description": "",
-  "main": "./main.js",
+  "name": "cartod2",
+  "version": "1.3.9",
+  "description": "Librairie implémentant une méthode de clustering fonctionnel (Intramax) à partir d'une matrice OD en csv et d'un objet topojson, ainsi que de générer des objets d3-hierarchy avec des attributs géométriques permettant le traçage de courbes de flux entre les différents éléments du fichier topojson",
+  "main": "./cartod2.js",
   "dependencies": {
-    "d3-dsv": "^1.2.0"
+    "d3": "^5",
+    "@turf/turf": "^5.1.6",
+    "topojson-client": "^3.0.2",
+    "mathjs": "^7.0.0"
   },
   "devDependencies": {
     "rollup-plugin-commonjs": "^10.1.0",
@@ -15,6 +18,6 @@
   "scripts": {
     "build": "rollup -c"
   },
-  "author": "",
+  "author": "Etienne Come, Berlan Malanda, Axel Vroust, Paul Fabre",
   "license": "ISC"
 }
