@@ -258,6 +258,7 @@ export function cut (dendovar,K){
   
   }
   
+  
 
   //On récupère les "feuilles" (élément sans enfants) des clusters
   let flat_clusters = clusters.map(c => c.leaves())

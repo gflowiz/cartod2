@@ -1,4 +1,4 @@
-/**
+  /**
  * Associe à chaque identifiant du tableau de flux flowsArray, les flux dont il est la destination
  * @param {Array} flowsArray Tableau d'objets représentant chacun un flux (avec origin, destination et valeur)
  * @returns {Object}
@@ -89,17 +89,3 @@ export function bilink2  (dendos) {
     return dendos;
   }
 
-  /**
- * Génère un "tableau de flux" à partir d'un tableau d'objets d3-hierarchy. En clair, cette fonction applati les attributs
- * incomingFlows des éléments newLeavesObjects des clusters en entrée.
- * @param {Array} subDendos Tableau d'objets d3-hierarchy (résultat de la fonction cut())
- * @returns {Array} Dont chaque élément représente un flux.
- * 
- */
-export function generateFlows  (subDendos) {
-
-  bilink2 (subDendos)
-
-  let tab = subDendos.flatMap( dendo =>  dendo.newLeavesObjects.map ( leaf => leaf.incomingFlows) )
-  return tab.flat()
-}

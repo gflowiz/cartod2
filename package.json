@@ -1,6 +1,6 @@
 {
   "name": "cartod2",
-  "version": "1.3.9",
+  "version": "1.6.3",
   "description": "Librairie implémentant une méthode de clustering fonctionnel (Intramax) à partir d'une matrice OD en csv et d'un objet topojson, ainsi que de générer des objets d3-hierarchy avec des attributs géométriques permettant le traçage de courbes de flux entre les différents éléments du fichier topojson",
   "main": "./cartod2.js",
   "dependencies": {

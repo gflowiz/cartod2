@@ -23,7 +23,7 @@ export const projectionScale = tools.getProjectionScale
 export const unfoldJson = tools.unfoldJson  
 export const line = tools.line  
 export const cut = intramaxModule.cut
-export const generateFlows = flows.generateFlows
+
 
 /**
  * INTRAMAX
@@ -105,10 +105,43 @@ export function clusterGeom  (jsonObject, featureIdKey, odMatrix, projection ) {
     let projectionScale = tools.getProjectionScale ( bboxLength )
     circularProjection.getNewLeaves(dendoHier,  projection, projectionScale)
     circularProjection.retrieveParents ( dendoHier )
-    clusterGeometry.getNewClusterCentroid(dendoHier)
   
     return dendoHier
   }
+
+  /**
+   * Coupe un dendogramme et actualise la position de tous les clusters. La nouvelle position
+   * des clusters est calculée en fonction de la nouvelle position de leurs feuilles pour un
+   * nombre "nbCluster" de clusters. Elle est enregistrée dans l'attribut 'newClusterCentroid'.
+   * @param {Object} dendo Objet d3-hierarchy
+   * @param {Number} nbCluster Nombre de cluster souhaité
+   * @returns {Array} Tableau de plusieurs objets d3-hierarchy
+   */
+
+  export function cutAndUpdate (dendo, nbCluster) {
+  
+    let subDendos = intramaxModule.cut(dendo, nbCluster)[0]
+    return circularProjection.updateClustersCentroids(dendo,subDendos)
+  
+  }
+  
+
+ /** 
+ * Génère un "tableau de flux" à partir d'un tableau d'objets d3-hierarchy. En clair, cette fonction applati les attributs
+ * incomingFlows des éléments newLeavesObjects des clusters en entrée.
+ * @param {Array} subDendos Tableau d'objets d3-hierarchy (résultat de la fonction cut())
+ * @returns {Array} Dont chaque élément représente un flux.
+ * 
+ */
+export function generateFlows  (subDendos) {
+
+  flows.bilink2 (subDendos)
+  
+  let tab = subDendos.flatMap( dendo =>  dendo.newLeavesObjects.map ( leaf => leaf.incomingFlows) )
+  return tab.flat()
+}
+
+
 
 
 

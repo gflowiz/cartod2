@@ -51,7 +51,9 @@ export function getNewPosition  (circleCenter,radius, pointToTranslate) {
       
   
       cluster.newLeavesPositions = []
+      cluster.newLeavesHashPositions = {}
       cluster.newLeavesObjects = []
+      
       let circleCenter =   projection ( cluster.clusterCentroid ).map( coord => Math.round(coord*100)/100)
       let radius = projectionScale(cluster.circleRadius)
   
@@ -63,6 +65,8 @@ export function getNewPosition  (circleCenter,radius, pointToTranslate) {
   
           let leafNewPosition = getNewPosition ( circleCenter, radius, leafCenter )
           cluster.newLeavesPositions.push ( leafNewPosition )
+
+          cluster.newLeavesHashPositions[subcluster.data.id] = leafNewPosition
           
           let subcluster_copy = subcluster.copy()
           subcluster_copy.newPosition = leafNewPosition
@@ -106,4 +110,64 @@ export function getNewPosition  (circleCenter,radius, pointToTranslate) {
     })
     
     return dendo
+  }
+
+
+  export function updateClustersCentroids (dendo, dendos) {
+  
+  
+    let hashPositions = {}
+    
+    for (let dendo of dendos) {
+      
+      for (let leaf of dendo.newLeavesObjects) {
+        let leafId = leaf.data.id
+         hashPositions[leafId] = leaf.newPosition
+      }
+  
+  
+        }
+    
+      
+      dendo.each ( cluster => {
+        
+        cluster.newLeavesPositions = []
+        
+        for (let id of cluster.leavesIds) {
+  
+          let position = hashPositions[id]
+          cluster.newLeavesPositions.push(position)
+          
+         }
+  
+  
+        if (cluster.leaves().length === 1 ) {cluster.newClusterCentroid = cluster.clusterCentroid}
+        else if (cluster.leaves().length === 2 ) {
+  
+          let points = cluster.newLeavesPositions
+          let newPoint = [(points[0][0]+points[1][0])/2, (points[0][1]+points[1][1])/2]
+          cluster.newClusterCentroid = newPoint
+        }
+        else {
+  
+          let sumX = 0
+          let sumY = 0
+          let nbPoints = cluster.newLeavesPositions.length
+  
+          for (let i = 0; i < nbPoints; i++) {
+            sumX += cluster.newLeavesPositions[i][0]
+            sumY += cluster.newLeavesPositions[i][1]
+  
+        }
+          let newPoint = [sumX/nbPoints, sumY/nbPoints]
+          cluster.newClusterCentroid = newPoint
+  
+        }
+  
+  
+  
+  
+    })
+    
+  return dendos
   }

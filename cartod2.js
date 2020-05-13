@@ -24760,13 +24760,13 @@ return d[d.length-1];};return ", funcName].join("");
     
         .x(function(d) {
           if (d.leaves().length === 1 ) { return d.newPosition[0]}
-          else {return projection(d.clusterCentroid)[0]}
+          else {return d.newClusterCentroid[0]}
         })
     
     
         .y(function(d) {
           if (d.leaves().length === 1 ) { return d.newPosition[1]}
-          else {return projection(d.clusterCentroid)[1]}
+          else {return d.newClusterCentroid[1]}
         })
     
         .curve( curve(force) );
@@ -24865,7 +24865,9 @@ return d[d.length-1];};return ", funcName].join("");
         
     
         cluster.newLeavesPositions = [];
+        cluster.newLeavesHashPositions = {};
         cluster.newLeavesObjects = [];
+        
         let circleCenter =   projection ( cluster.clusterCentroid ).map( coord => Math.round(coord*100)/100);
         let radius = projectionScale(cluster.circleRadius);
     
@@ -24877,6 +24879,8 @@ return d[d.length-1];};return ", funcName].join("");
     
             let leafNewPosition = getNewPosition ( circleCenter, radius, leafCenter );
             cluster.newLeavesPositions.push ( leafNewPosition );
+
+            cluster.newLeavesHashPositions[subcluster.data.id] = leafNewPosition;
             
             let subcluster_copy = subcluster.copy();
             subcluster_copy.newPosition = leafNewPosition;
@@ -24920,6 +24924,66 @@ return d[d.length-1];};return ", funcName].join("");
       });
       
       return dendo
+    }
+
+
+    function updateClustersCentroids (dendo, dendos) {
+    
+    
+      let hashPositions = {};
+      
+      for (let dendo of dendos) {
+        
+        for (let leaf of dendo.newLeavesObjects) {
+          let leafId = leaf.data.id;
+           hashPositions[leafId] = leaf.newPosition;
+        }
+    
+    
+          }
+      
+        
+        dendo.each ( cluster => {
+          
+          cluster.newLeavesPositions = [];
+          
+          for (let id of cluster.leavesIds) {
+    
+            let position = hashPositions[id];
+            cluster.newLeavesPositions.push(position);
+            
+           }
+    
+    
+          if (cluster.leaves().length === 1 ) {cluster.newClusterCentroid = cluster.clusterCentroid;}
+          else if (cluster.leaves().length === 2 ) {
+    
+            let points = cluster.newLeavesPositions;
+            let newPoint = [(points[0][0]+points[1][0])/2, (points[0][1]+points[1][1])/2];
+            cluster.newClusterCentroid = newPoint;
+          }
+          else {
+    
+            let sumX = 0;
+            let sumY = 0;
+            let nbPoints = cluster.newLeavesPositions.length;
+    
+            for (let i = 0; i < nbPoints; i++) {
+              sumX += cluster.newLeavesPositions[i][0];
+              sumY += cluster.newLeavesPositions[i][1];
+    
+          }
+            let newPoint = [sumX/nbPoints, sumY/nbPoints];
+            cluster.newClusterCentroid = newPoint;
+    
+          }
+    
+    
+    
+    
+      });
+      
+    return dendos
     }
 
   var DEFAULT_CONFIG = {
@@ -43309,6 +43373,7 @@ return d[d.length-1];};return ", funcName].join("");
     
     }
     
+    
 
     //On récupère les "feuilles" (élément sans enfants) des clusters
     let flat_clusters = clusters.map(c => c.leaves());
@@ -43410,21 +43475,6 @@ return d[d.length-1];};return ", funcName].join("");
       return dendos;
     }
 
-    /**
-   * Génère un "tableau de flux" à partir d'un tableau d'objets d3-hierarchy. En clair, cette fonction applati les attributs
-   * incomingFlows des éléments newLeavesObjects des clusters en entrée.
-   * @param {Array} subDendos Tableau d'objets d3-hierarchy (résultat de la fonction cut())
-   * @returns {Array} Dont chaque élément représente un flux.
-   * 
-   */
-  function generateFlows  (subDendos) {
-
-    bilink2 (subDendos);
-
-    let tab = subDendos.flatMap( dendo =>  dendo.newLeavesObjects.map ( leaf => leaf.incomingFlows) );
-    return tab.flat()
-  }
-
   /**
    * Ajoute à chaque noeud les ids de ses feuilles
    * @param {Object} dendo Object de type de type d3-hierarchy
@@ -43523,45 +43573,7 @@ return d[d.length-1];};return ", funcName].join("");
       });
     }
     
-    /**
-     * Ajoute à chaque noeud les coordonnées de son centroïde (en prenant en compte la position projetée des feuilles)
-     * @param {Object} dendo Object de type de type d3-hierarchy
-     * 
-     */
-    function getNewClusterCentroid (dendo) {
-    
-      dendo.each ( cluster => {
-        
-        
-        cluster.newClusterCentroid = "undefined";
-        
-        if (cluster.leaves().length === 1 ) {cluster.newClusterCentroid = cluster.clusterCentroid;}
-        else if (cluster.leaves().length === 2 ) {
-          
-          let points = cluster.newLeavesPositions;
-          let newPoint = [(points[0][0]+points[1][0])/2, (points[0][1]+points[1][1])/2];
-          cluster.newClusterCentroid = newPoint;
-        }
-        else {
-          
-          let sumX = 0;
-          let sumY = 0;
-          let nbPoints = cluster.newLeavesPositions.length;
-          
-          for (let i = 0; i < nbPoints; i++) {
-            sumX += cluster.newLeavesPositions[i][0];
-            sumY += cluster.newLeavesPositions[i][1];
-    
-        }
-          let newPoint = [sumX/nbPoints, sumY/nbPoints];
-          cluster.newClusterCentroid = newPoint;
-    
-        }
-    
-      });
-      
-      return dendo
-    }
+   
     
     /**
      * Ajoute à chaque noeud le rayon du cercle servant à projeter ses feuilles (en km)
@@ -43611,7 +43623,7 @@ return d[d.length-1];};return ", funcName].join("");
   const unfoldJson$1 = unfoldJson;  
   const line$1 = line;  
   const cut$1 = cut;
-  const generateFlows$1 = generateFlows;
+
 
   /**
    * INTRAMAX
@@ -43693,19 +43705,51 @@ return d[d.length-1];};return ", funcName].join("");
       let projectionScale = getProjectionScale ( bboxLength );
       getNewLeaves(dendoHier,  projection, projectionScale);
       retrieveParents ( dendoHier );
-      getNewClusterCentroid(dendoHier);
     
       return dendoHier
     }
 
+    /**
+     * Coupe un dendogramme et actualise la position de tous les clusters. La nouvelle position
+     * des clusters est calculée en fonction de la nouvelle position de leurs feuilles pour un
+     * nombre "nbCluster" de clusters. Elle est enregistrée dans l'attribut 'newClusterCentroid'.
+     * @param {Object} dendo Objet d3-hierarchy
+     * @param {Number} nbCluster Nombre de cluster souhaité
+     * @returns {Array} Tableau de plusieurs objets d3-hierarchy
+     */
+
+    function cutAndUpdate (dendo, nbCluster) {
+    
+      let subDendos = cut(dendo, nbCluster)[0];
+      return updateClustersCentroids(dendo,subDendos)
+    
+    }
+    
+
+   /** 
+   * Génère un "tableau de flux" à partir d'un tableau d'objets d3-hierarchy. En clair, cette fonction applati les attributs
+   * incomingFlows des éléments newLeavesObjects des clusters en entrée.
+   * @param {Array} subDendos Tableau d'objets d3-hierarchy (résultat de la fonction cut())
+   * @returns {Array} Dont chaque élément représente un flux.
+   * 
+   */
+  function generateFlows  (subDendos) {
+
+    bilink2 (subDendos);
+    
+    let tab = subDendos.flatMap( dendo =>  dendo.newLeavesObjects.map ( leaf => leaf.incomingFlows) );
+    return tab.flat()
+  }
+
   exports.bboxLength = bboxLength;
   exports.clusterGeom = clusterGeom;
   exports.cut = cut$1;
+  exports.cutAndUpdate = cutAndUpdate;
   exports.featureCollection = featureCollection$1;
   exports.flowsArray = flowsArray;
   exports.flowsMap = flowsMap;
   exports.flowsScale = flowsScale;
-  exports.generateFlows = generateFlows$1;
+  exports.generateFlows = generateFlows;
   exports.intramax = intramax$1;
   exports.line = line$1;
   exports.projectionScale = projectionScale;

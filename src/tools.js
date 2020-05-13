@@ -233,13 +233,13 @@ export function getProjectionScale  (bboxLength) {
   
       .x(function(d) {
         if (d.leaves().length === 1 ) { return d.newPosition[0]}
-        else {return projection(d.clusterCentroid)[0]}
+        else {return d.newClusterCentroid[0]}
       })
   
   
       .y(function(d) {
         if (d.leaves().length === 1 ) { return d.newPosition[1]}
-        else {return projection(d.clusterCentroid)[1]}
+        else {return d.newClusterCentroid[1]}
       })
   
       .curve( curve(force) )

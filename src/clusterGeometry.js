@@ -102,45 +102,7 @@ export function getLeavesId (dendo) {
     })
   }
   
-  /**
-   * Ajoute à chaque noeud les coordonnées de son centroïde (en prenant en compte la position projetée des feuilles)
-   * @param {Object} dendo Object de type de type d3-hierarchy
-   * 
-   */
-  export function getNewClusterCentroid (dendo) {
-  
-    dendo.each ( cluster => {
-      
-      
-      cluster.newClusterCentroid = "undefined"
-      
-      if (cluster.leaves().length === 1 ) {cluster.newClusterCentroid = cluster.clusterCentroid}
-      else if (cluster.leaves().length === 2 ) {
-        
-        let points = cluster.newLeavesPositions
-        let newPoint = [(points[0][0]+points[1][0])/2, (points[0][1]+points[1][1])/2]
-        cluster.newClusterCentroid = newPoint
-      }
-      else {
-        
-        let sumX = 0
-        let sumY = 0
-        let nbPoints = cluster.newLeavesPositions.length
-        
-        for (let i = 0; i < nbPoints; i++) {
-          sumX += cluster.newLeavesPositions[i][0]
-          sumY += cluster.newLeavesPositions[i][1]
-  
-      }
-        let newPoint = [sumX/nbPoints, sumY/nbPoints]
-        cluster.newClusterCentroid = newPoint
-  
-      }
-  
-    })
-    
-    return dendo
-  }
+ 
   
   /**
    * Ajoute à chaque noeud le rayon du cercle servant à projeter ses feuilles (en km)
