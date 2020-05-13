@@ -7,12 +7,8 @@ import * as clusterGeometry from "./clusterGeometry.js"
 
 
 /**
- * TOOLS
- */
-  /**
-   * FLOWS
-   */
-
+EXPORTS
+*/
 
 export const flowsArray = tools.getFlowsArray  
 export const flowsMap = tools.getFlowsMap 
@@ -24,10 +20,6 @@ export const unfoldJson = tools.unfoldJson
 export const line = tools.line  
 export const cut = intramaxModule.cut
 
-
-/**
- * INTRAMAX
- */
 
  /**
  * Fonction qui exécute la fonction intramax() avec les paramètres dérivés du json et de la matrice de flux en entrée.
@@ -57,11 +49,6 @@ export function intramax  (jsonObject, featureIdKey, odMatrix) {
     return dendo
   }
 
-
-
-/**
- * CLUSTER GEOMETRY
- */
 
    /**
  * Fonction produisant un Objet à structure hierarchique par fusions successives des entités d'indices (l,l) dans les
@@ -108,6 +95,7 @@ export function clusterGeom  (jsonObject, featureIdKey, odMatrix, projection ) {
   
     return dendoHier
   }
+
 
   /**
    * Coupe un dendogramme et actualise la position de tous les clusters. La nouvelle position
