@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: circularProjection.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: circularProjection.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Fonction permettant de projeter un point sur un cercle de centre et rayon connu (Méthode Françoise Bahoken)
+ * @param {Array} circleCenter Coordonnées du centre du cercle
+ * @param {Number} radius Rayon du cercle en unité du système de projection en paramètre de la fonction getNewLeaves(),
+ * qui appelle cette fonction.
+ * @param {Array} pointToTranslate Coordonnées du point à projeter
+ * @returns {Array} Coordonnées de la nouvelle position
+ */
+export function getNewPosition  (circleCenter,radius, pointToTranslate) {
+
+    //Prise en compte du cas ou le centre du cercle et le point à translater sont au même endroit
+    if (circleCenter[0] == pointToTranslate[0] &amp; circleCenter[1] == pointToTranslate[1] ) {
+      return [circleCenter[0], circleCenter[1] ] 
+    }
+  
+    let a = circleCenter
+    let b = pointToTranslate
+    let vect_ba = [ a[0] - b[0], a[1] - b[1] ]
+    //On normalise le vecteur ba ( pour que sa norme soit égale à 1)
+    let norm_ab = Math.sqrt ( vect_ba[0]**2 + vect_ba[1]**2 )
+    let coef_norm = 1 / norm_ab 
+    let vect_ba_norm = [ vect_ba[0]*coef_norm, vect_ba[1]*coef_norm]
+  
+    //On calcule le nouveau vecteur qui va permettre de passer du centre du cercle au nouveau point
+    let new_vect = [ -vect_ba_norm[0]*radius , -vect_ba_norm[1]*radius ]
+    //Puis la nouvelle position (en partant du centre du cercle) 
+    let new_position = [ a[0] + new_vect[0] , a[1] + new_vect[1] ]
+  
+  return new_position
+  
+  }
+  
+  /**
+   * Permet d'ajouter à un objet d3-hierarchy l'attribut newLeavesPositions et newLeavesObjects
+   * @param {Object} dendo Objet de type d3-hierarchy
+   * @param {Function} projection Fonction de projection qui prend en entrée un tableau de coordonnées en WGS84, 
+   * et retourne un tableau de coordonnées projetées (dans l’unité voulue, cela n’a pas d’importance).
+   * @param {Function} projectionScale Une fonction de type d3.scaleLinear dont :
+      • Le domain va de 0 à la longueur de la bouding box du topojson à partir de laquelle dendo
+      a été généré en unité de la projection ci-dessus
+      • Le range va de 0 à la longueur de cette bounding box en kilomètres.
+    @returns {Object} Objet de type d3-hierarchy dont chaque noeud possède un attribut newLeavesPosition qui 
+    compile toutes les positions de ses feuilles, ainsi qu'un attribut newLeavesObjetcs qui est une copie de l'objet 
+    correspondant à chacune de ses feuilles (Attention : ces objets n'ont aucun ascendant, voir d3.copy())
+   */
+  
+  export function getNewLeaves (dendo, projection, projectionScale ) {
+    
+    
+    dendo.each( cluster => {
+      
+  
+      cluster.newLeavesPositions = []
+      cluster.newLeavesHashPositions = {}
+      cluster.newLeavesObjects = []
+      
+      let circleCenter =   projection ( cluster.clusterCentroid ).map( coord => Math.round(coord*100)/100)
+      let radius = projectionScale(cluster.circleRadius)
+  
+      cluster.leaves().forEach ( subcluster => {
+  
+        let leafCenter =   projection ( subcluster.clusterCentroid ).map( coord => Math.round(coord*100)/100) 
+  
+        try { 
+  
+          let leafNewPosition = getNewPosition ( circleCenter, radius, leafCenter )
+          cluster.newLeavesPositions.push ( leafNewPosition )
+
+          cluster.newLeavesHashPositions[subcluster.data.id] = leafNewPosition
+          
+          let subcluster_copy = subcluster.copy()
+          subcluster_copy.newPosition = leafNewPosition
+          cluster.newLeavesObjects.push ( subcluster_copy )
+          
+        }
+        
+        catch(e) {
+          console.error(e)
+          return
+        }
+  
+  
+        })
+      return cluster
+    })
+    
+    
+    return dendo
+  }
+  
+  /**
+   * Permet d'affecter à chaque newLeavesObjects (voir getNewLeaves()) de chaque noeud, le parent qui lui correspond dans
+   * l'arbre de référence (dendo)
+   * @param {Object} dendo Objet d3-hierarchy
+   * @returns {Object} Objet d3-hierarchy
+   */
+  
+  export function retrieveParents  (dendo) {
+    
+    //On crée le tableau associatif permettant de d'associer à chaque id son objet, et ainsi retrouver par la suite son parent
+    let leaves_map = {}
+    dendo.leaves().forEach( leaf => {
+      leaves_map[leaf.data.id] = leaf
+    } )
+    
+    dendo.each ( cluster => {
+      cluster.newLeavesObjects.forEach ( leaf => {
+        leaf.parent = leaves_map[leaf.data.id].parent
+      })
+    })
+    
+    return dendo
+  }
+
+
+  export function updateClustersCentroids (dendo, dendos) {
+  
+  
+    let hashPositions = {}
+    
+    for (let dendo of dendos) {
+      
+      for (let leaf of dendo.newLeavesObjects) {
+        let leafId = leaf.data.id
+         hashPositions[leafId] = leaf.newPosition
+      }
+  
+  
+        }
+    
+      
+      dendo.each ( cluster => {
+        
+        cluster.newLeavesPositions = []
+        
+        for (let id of cluster.leavesIds) {
+  
+          let position = hashPositions[id]
+          cluster.newLeavesPositions.push(position)
+          
+         }
+  
+  
+        if (cluster.leaves().length === 1 ) {cluster.newClusterCentroid = cluster.clusterCentroid}
+        else if (cluster.leaves().length === 2 ) {
+  
+          let points = cluster.newLeavesPositions
+          let newPoint = [(points[0][0]+points[1][0])/2, (points[0][1]+points[1][1])/2]
+          cluster.newClusterCentroid = newPoint
+        }
+        else {
+  
+          let sumX = 0
+          let sumY = 0
+          let nbPoints = cluster.newLeavesPositions.length
+  
+          for (let i = 0; i &lt; nbPoints; i++) {
+            sumX += cluster.newLeavesPositions[i][0]
+            sumY += cluster.newLeavesPositions[i][1]
+  
+        }
+          let newPoint = [sumX/nbPoints, sumY/nbPoints]
+          cluster.newClusterCentroid = newPoint
+  
+        }
+  
+  
+  
+  
+    })
+    
+  return dendos
+  }</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#bilink2">bilink2</a></li><li><a href="global.html#checkConformity">checkConformity</a></li><li><a href="global.html#clusterGeom">clusterGeom</a></li><li><a href="global.html#col_sums">col_sums</a></li><li><a href="global.html#cut">cut</a></li><li><a href="global.html#cutAndUpdate">cutAndUpdate</a></li><li><a href="global.html#extractImports">extractImports</a></li><li><a href="global.html#flowsArray">flowsArray</a></li><li><a href="global.html#generateFlows">generateFlows</a></li><li><a href="global.html#getBboxLength">getBboxLength</a></li><li><a href="global.html#getCircleRadius">getCircleRadius</a></li><li><a href="global.html#getClusterArea">getClusterArea</a></li><li><a href="global.html#getClusterCentroid">getClusterCentroid</a></li><li><a href="global.html#getDendo">getDendo</a></li><li><a href="global.html#getDistance">getDistance</a></li><li><a href="global.html#getFeatureCollection">getFeatureCollection</a></li><li><a href="global.html#getFlowsArray">getFlowsArray</a></li><li><a href="global.html#getFlowsIds">getFlowsIds</a></li><li><a href="global.html#getFlowsKeys">getFlowsKeys</a></li><li><a href="global.html#getFlowsMap">getFlowsMap</a></li><li><a href="global.html#getFlowsMatrix">getFlowsMatrix</a></li><li><a href="global.html#getFlowsScale">getFlowsScale</a></li><li><a href="global.html#getHashIds">getHashIds</a></li><li><a href="global.html#getImports">getImports</a></li><li><a href="global.html#getJsonIds">getJsonIds</a></li><li><a href="global.html#getLeavesCentroids">getLeavesCentroids</a></li><li><a href="global.html#getLeavesGeom">getLeavesGeom</a></li><li><a href="global.html#getLeavesId">getLeavesId</a></li><li><a href="global.html#getNeighborsArray">getNeighborsArray</a></li><li><a href="global.html#getNeighborsMatrix">getNeighborsMatrix</a></li><li><a href="global.html#getNewLeaves">getNewLeaves</a></li><li><a href="global.html#getNewPosition">getNewPosition</a></li><li><a href="global.html#getProjectionScale">getProjectionScale</a></li><li><a href="global.html#intramax">intramax</a></li><li><a href="global.html#mapFeatures">mapFeatures</a></li><li><a href="global.html#merge_region">merge_region</a></li><li><a href="global.html#retrieveParents">retrieveParents</a></li><li><a href="global.html#row_sums">row_sums</a></li><li><a href="global.html#total">total</a></li><li><a href="global.html#unfoldJson">unfoldJson</a></li><li><a href="global.html#unique">unique</a></li><li><a href="global.html#which_max">which_max</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.4</a> on Wed May 13 2020 12:11:22 GMT+0200 (heure d’été d’Europe centrale)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

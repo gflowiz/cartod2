@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: flows.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: flows.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>  /**
+ * Associe à chaque identifiant du tableau de flux flowsArray, les flux dont il est la destination
+ * @param {Array} flowsArray Tableau d'objets représentant chacun un flux (avec origin, destination et valeur)
+ * @returns {Object}
+ */
+export function extractImports  (flowsArray) {
+    let flows_assoc = {};
+    let destinationKey = Object.keys(flowsArray[0])[1]
+    
+    flowsArray.forEach(function(flow) {
+  
+      if (typeof flows_assoc[flow[destinationKey]] == 'undefined') {flows_assoc[flow[destinationKey]] = []}
+  
+      flows_assoc[flow[destinationKey]].push(flow)
+    })
+    
+    return flows_assoc
+                                
+  }
+  
+  /**
+   * Ajoute à chaque feuille d'un dendo un attribut contenant tous les flux dont il est la destination
+   * @param {Object} dendo Objet d3-hierarchy
+   * @param {Array} flowsArray Tableau d'objets représentant chacun un flux (avec les attributs d'origine, de destination
+   * et de valeur)
+   */
+  export function getImports (dendo, flowsArray){
+    
+    let flowsImports = extractImports (flowsArray)
+    
+    //On crée l'attribut import pour les feuilles du dendo
+    dendo.leaves().forEach(function(leaf) {
+      leaf["incomingFlows"] = flowsImports[leaf.leavesIds[0]]
+    })    
+    return dendo
+  }
+
+  /**
+ * Ajoute à chaque newLeavesObjects des dendo contenus dans le tableau dendos, un attribut incomingFlows contenant l'origine
+ * et la destination (lui même ) de chaque flux dont il est la destination.Donc l'attribut incomingFlows est un tableau
+ * de longueur n (n étant le nombre de flux reçus par par la feuille en question), est donc chaque élément est un tableau
+ * de 2 objets (origine, destination). Cet attribut est utile pour tracer les courbes entre feuillesvia la méthode de 
+ * edge bundling
+ * @param {Array} dendos Liste d'objets d3-hierarchy
+ * @returns {Array} dendos modifiés
+ */
+export function bilink2  (dendos) {
+  
+    let leavesObjectsMap = {}
+    let leavesImportsMap = {}
+    let originKey = Object.keys( dendos[0].leaves()[0].incomingFlows[0])[0]
+    
+    dendos.forEach ( subdendo => {
+  
+        subdendo.newLeavesObjects.forEach ( leaf => {
+          leavesObjectsMap[leaf.data.id] = leaf
+  
+        })
+  
+        subdendo.leaves().forEach ( leaf => {
+          leavesImportsMap[leaf.data.id] = leaf.incomingFlows
+        })
+  
+    })
+  
+    for (let cluster of dendos ) {
+  
+      for (let leaf of cluster.newLeavesObjects )  {
+          
+        let leafImports = leavesImportsMap[leaf.data.id]
+  
+        leaf.incomingFlows = []
+        
+        for ( let flow of leafImports )  {
+          
+          let originId = flow[originKey]
+          let origin = leavesObjectsMap[originId]
+          let destination = leaf
+  
+          let incomingFlows = [origin, destination]
+          leaf.incomingFlows.push ( incomingFlows )
+  
+  
+        }
+      }
+  
+    }
+  
+    return dendos;
+  }
+
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#bilink2">bilink2</a></li><li><a href="global.html#checkConformity">checkConformity</a></li><li><a href="global.html#clusterGeom">clusterGeom</a></li><li><a href="global.html#col_sums">col_sums</a></li><li><a href="global.html#cut">cut</a></li><li><a href="global.html#cutAndUpdate">cutAndUpdate</a></li><li><a href="global.html#extractImports">extractImports</a></li><li><a href="global.html#flowsArray">flowsArray</a></li><li><a href="global.html#generateFlows">generateFlows</a></li><li><a href="global.html#getBboxLength">getBboxLength</a></li><li><a href="global.html#getCircleRadius">getCircleRadius</a></li><li><a href="global.html#getClusterArea">getClusterArea</a></li><li><a href="global.html#getClusterCentroid">getClusterCentroid</a></li><li><a href="global.html#getDendo">getDendo</a></li><li><a href="global.html#getDistance">getDistance</a></li><li><a href="global.html#getFeatureCollection">getFeatureCollection</a></li><li><a href="global.html#getFlowsArray">getFlowsArray</a></li><li><a href="global.html#getFlowsIds">getFlowsIds</a></li><li><a href="global.html#getFlowsKeys">getFlowsKeys</a></li><li><a href="global.html#getFlowsMap">getFlowsMap</a></li><li><a href="global.html#getFlowsMatrix">getFlowsMatrix</a></li><li><a href="global.html#getFlowsScale">getFlowsScale</a></li><li><a href="global.html#getHashIds">getHashIds</a></li><li><a href="global.html#getImports">getImports</a></li><li><a href="global.html#getJsonIds">getJsonIds</a></li><li><a href="global.html#getLeavesCentroids">getLeavesCentroids</a></li><li><a href="global.html#getLeavesGeom">getLeavesGeom</a></li><li><a href="global.html#getLeavesId">getLeavesId</a></li><li><a href="global.html#getNeighborsArray">getNeighborsArray</a></li><li><a href="global.html#getNeighborsMatrix">getNeighborsMatrix</a></li><li><a href="global.html#getNewLeaves">getNewLeaves</a></li><li><a href="global.html#getNewPosition">getNewPosition</a></li><li><a href="global.html#getProjectionScale">getProjectionScale</a></li><li><a href="global.html#intramax">intramax</a></li><li><a href="global.html#mapFeatures">mapFeatures</a></li><li><a href="global.html#merge_region">merge_region</a></li><li><a href="global.html#retrieveParents">retrieveParents</a></li><li><a href="global.html#row_sums">row_sums</a></li><li><a href="global.html#total">total</a></li><li><a href="global.html#unfoldJson">unfoldJson</a></li><li><a href="global.html#unique">unique</a></li><li><a href="global.html#which_max">which_max</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.4</a> on Wed May 13 2020 12:11:22 GMT+0200 (heure d’été d’Europe centrale)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
