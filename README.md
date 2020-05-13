@@ -7,6 +7,10 @@ Pour la présentation complète du package, rendez-vous [ici]( https://observabl
 
 npm install cartod2
 
+**ACCÉS À LA DOCUMENTATION DÉVELOPPEUR**
+
+Cloner ce repository localement puis ouvrir le fichier Doc_Dev/global.html dans un navigateur.
+
 **DETAIL DES FONCTIONS**  
 
 
